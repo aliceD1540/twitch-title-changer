@@ -1,0 +1,27 @@
+{
+    "ClientId": "twitch-client-id",
+    "SecretId": "twitch-secret-id",
+    "User": {
+        "Name": "twitch-user-name"
+    },
+    "Games": [
+        {
+            "GameName": "Ring Fit Adventure",
+            "GameId": 514313,
+            "Title": "リングフィットアドベンチャー",
+            "Priority": 0
+        },
+        {
+            "GameName": "Fitness Boxing 2: Rhythm & Exercise",
+            "GameId": 1903408770,
+            "Title": "フィットボクシング2",
+            "Priority": 1
+        },
+        {
+            "GameId": "509658",
+            "GameName": "Just Chatting",
+            "Title": "雑談",
+            "Priority": 2
+        }
+    ]
+}
