@@ -4,6 +4,7 @@ from main import config
 import os
 import json
 import sys
+import asyncio
 
 sg.theme('BlueMono')
 
@@ -19,13 +20,13 @@ def open_sub_window(data):
             [sg.HorizontalSeparator()],
             [
                 sg.Column(
-                    [[sg.Text('Game Title')],[sg.Text('Game Id')],[sg.Text('Broadcast Title')]]
+                    [[sg.Text('Game Title')],[sg.Text('Game Id')],[sg.Text('Broadcast Title')],[sg.Text('Tags')]]
                 ),
                 sg.Column(
-                    [[sg.InputText('',disabled=True,key='game title')],[sg.InputText('',disabled=True,key='game id')],[sg.InputText('',key='broadcast title')]]
+                    [[sg.InputText('',disabled=True,key='game title')],[sg.InputText('',disabled=True,key='game id')],[sg.InputText('',key='broadcast title')],[sg.InputText('',key='tags')]]
                 )
             ],
-            [sg.Column([[sg.Button('Update'), sg.Button('Cancel')]], justification='r')]
+            [sg.Column([[sg.Button('Load Current Tags'), sg.Button('Update'), sg.Button('Cancel')]], justification='r')]
         ]
     sub_window = sg.Window('Broadcast Info', sub_layout, finalize=True, resizable=False, modal=True)
 
@@ -34,12 +35,16 @@ def open_sub_window(data):
         sub_window['game title'].update('')
         sub_window['game id'].update('')
         sub_window['broadcast title'].update('')
+        # 新規の場合、タグは現在設定されているものを読み込む
+        tag_dict = asyncio.run(main.get_tags(config.get('TwitchUserName','')))
+        sub_window['tags'].update(",".join(tag_dict))
         priority = main.get_max_priority() + 1
     else:
         sub_window['game title'].update(data[0][0])
         sub_window['game id'].update(data[0][1])
         sub_window['broadcast title'].update(data[0][2])
-        priority = data[0][3]
+        sub_window['tags'].update(data[0][3])
+        priority = data[0][4]
 
     res = None
     while True:
@@ -55,6 +60,9 @@ def open_sub_window(data):
             if game_info != None:
                 sub_window['game title'].update(game_info[0][0])
                 sub_window['game id'].update(game_info[0][1])
+        if event == 'Load Current Tags':
+            tag_dict = asyncio.run(main.get_tags(config.get('TwitchUserName','')))
+            sub_window['tags'].update(",".join(tag_dict))
         if event == sg.WIN_CLOSED or event == 'Cancel':
             break
         if event == 'Update':
@@ -62,7 +70,8 @@ def open_sub_window(data):
                 "GameId": values['game id'],
                 "GameName": values['game title'],
                 "Title": values['broadcast title'],
-                "Priority": priority
+                "Priority": priority,
+                "Tags": values['tags']
             }
             break
     sub_window.close()
@@ -105,13 +114,14 @@ def open_main_window():
     メインウインドウの制御
     """
     game_list = main.get_game_list()
-    header = ('Game Title', 'Game Id', 'Title')
+    header = ('Game Title', 'Game Id', 'Title', 'Tags')
     main_layout=[
-                [sg.Text('User Name'), sg.InputText()],
-                [sg.Table(game_list, headings=header, auto_size_columns=False, col_widths=[30, 10, 70], justification='left', key='list')],
+                [sg.Text('Twitch User Name'), sg.InputText(key='twitch_user_name'), sg.Button('Authenticate')],
+                [sg.Table(game_list, headings=header, auto_size_columns=False, col_widths=[30, 10, 50, 20], justification='left', key='list')],
                 [sg.Column([[sg.Button('△'),sg.Button('▽'),sg.Button('Create'), sg.Button('Update'), sg.Button('Delete'), sg.Button('Regist to Twitch')]], justification='r')]
             ]
     main_window = sg.Window('Twitch Title Changer', main_layout, finalize=True, resizable=False)
+    main_window['twitch_user_name'].update(config.get('TwitchUserName',''))
 
     while True:
         # イベントの読み込み
@@ -167,11 +177,21 @@ def open_main_window():
                 # 複数同時削除は需要があれば考える
                 sg.popup('Please select one data.')
                 continue
-            main.change_broadcaster_info({
-                'BroadcasterName': 'libragrimoire',
+            # if not main.change_broadcaster_info({
+            #     'BroadcasterName': config['TwitchUserName'],
+            #     'GameId': selected_data[0][1],
+            #     'Title': selected_data[0][2],
+            #     'Tags': selected_data[0][3]
+            # }):
+            if not asyncio.run(main.change_broadcaster_info({
+                'BroadcasterName': config['TwitchUserName'],
                 'GameId': selected_data[0][1],
-                'Title': selected_data[0][2]
-            })
+                'Title': selected_data[0][2],
+                'Tags': selected_data[0][3]
+            })):
+                # 変更時に何かしらエラーが起きた
+                sg.popup_error('Error: Can`t chenge Broadcaster info.\nCheck Twitch User Name.')
+                continue
             sg.popup_notify('Broadcast Info updated.')
         if event == '△':
             # ひとつ上のアイテムと入れ替え
@@ -208,10 +228,15 @@ def open_main_window():
             game_list = main.get_game_list()
             main.update_config_json(config)
             main_window['list'].update(values=game_list, select_rows=[values['list'][0]+1])
-        # ウィンドウの×ボタンクリックで終了
+        if event == 'Authenticate':
+            # 認証処理
+            # await main.authenticate(values['twitch_user_name'])
+            asyncio.run(main.authenticate(values['twitch_user_name']))
         if event == sg.WIN_CLOSED:
+            # ウィンドウの×ボタンクリックで終了
             break
     # ウィンドウ終了処理
     main_window.close()
+
 
 open_main_window()
