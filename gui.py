@@ -123,6 +123,9 @@ def open_main_window():
     main_window = sg.Window('Twitch Title Changer', main_layout, finalize=True, resizable=False)
     main_window['twitch_user_name'].update(config.get('TwitchUserName',''))
 
+    # 起動時に認証処理走らせておく
+    asyncio.run(main.authenticate(config.get('TwitchUserName','')))
+
     while True:
         # イベントの読み込み
         event, values = main_window.read()
@@ -231,6 +234,8 @@ def open_main_window():
         if event == 'Authenticate':
             # 認証処理
             # await main.authenticate(values['twitch_user_name'])
+            del config['Token'], config['RefreshToken']
+            
             asyncio.run(main.authenticate(values['twitch_user_name']))
         if event == sg.WIN_CLOSED:
             # ウィンドウの×ボタンクリックで終了
