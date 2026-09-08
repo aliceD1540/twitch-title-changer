@@ -107,6 +107,22 @@ LANG=ja_JP.UTF-8 python3 main_new.py
 LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8 PYTHONIOENCODING=utf-8 python3 main_new.py
 ```
 
+**Windows 環境:**
+```cmd
+run.cmd
+```
+
+`run.cmd` は以下の処理を自動で行います：
+- UTF-8 コードページの設定（`chcp 65001`）
+- Python の自動検出（`python` または `python3`）
+- PYTHONIOENCODING の設定
+- アプリケーションの起動
+
+**注意**: Windows で日本語が正しく表示されない場合は、以下を確認してください：
+- Python 3.8 以上がインストールされていること
+- Windows Terminal か Visual Studio Code を使用すること（cmd.exe では問題が生じる可能性があります）
+- フォントが日本語をサポートしていること（Segoe UI Symbol や MS ゴシックなど）
+
 ### 基本的な操作
 
 1. **Twitch ユーザー名を入力して認証**
