@@ -13,18 +13,30 @@ logger = get_logger(__name__)
 
 
 def setup_locale() -> None:
-    """ロケール設定を初期化（WSL/Linux での文字化け対策）"""
-    try:
-        # UTF-8 ロケールを設定
-        locale.setlocale(locale.LC_ALL, "ja_JP.UTF-8")
-        logger.info("Locale set to ja_JP.UTF-8")
-    except locale.Error:
+    """ロケール設定を初期化（OS 別対応）"""
+    if sys.platform == "win32":
+        # Windows: シフトJIS または UTF-8 の試行
         try:
-            # フォールバック: システムデフォルト
-            locale.setlocale(locale.LC_ALL, "")
-            logger.info("Locale set to system default")
+            locale.setlocale(locale.LC_ALL, "ja_JP")
+            logger.info("Locale set to ja_JP (Windows)")
         except locale.Error:
-            logger.warning("Could not set locale, using C")
+            try:
+                # Windows コンソールは既に UTF-8 に設定（run.cmd で chcp 65001）
+                locale.setlocale(locale.LC_ALL, "")
+                logger.info("Locale set to system default (Windows)")
+            except locale.Error:
+                logger.warning("Could not set locale on Windows")
+    else:
+        # Linux/WSL: ja_JP.UTF-8 の試行
+        try:
+            locale.setlocale(locale.LC_ALL, "ja_JP.UTF-8")
+            logger.info("Locale set to ja_JP.UTF-8 (Linux/WSL)")
+        except locale.Error:
+            try:
+                locale.setlocale(locale.LC_ALL, "")
+                logger.info("Locale set to system default (Linux/WSL)")
+            except locale.Error:
+                logger.warning("Could not set locale, using C")
 
 
 def main() -> None:
