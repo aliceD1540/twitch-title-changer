@@ -30,7 +30,7 @@ src/
   ├── api/       # Twitch API ラッパー
   ├── gui/       # GUI アプリケーション
   └── utils/     # ユーティリティ
-main_new.py      # エントリーポイント
+main.py      # エントリーポイント
 ```
 
 ### 起動方法
@@ -42,7 +42,7 @@ python gui.py
 
 **新バージョン:**
 ```bash
-python main_new.py
+python main.py
 ```
 
 ### 設定ファイルの形式
@@ -72,7 +72,7 @@ cp config.json config.json.backup
 ### 3. 新しいアプリケーションの起動
 
 ```bash
-python main_new.py
+python main.py
 ```
 
 ### 4. 動作確認

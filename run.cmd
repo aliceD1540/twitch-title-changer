@@ -46,7 +46,7 @@ echo ==============================================================
 echo.
 
 REM メインアプリケーションを実行
-%PYTHON% main_new.py
+%PYTHON% main.py
 
 if %errorlevel% neq 0 (
     echo.

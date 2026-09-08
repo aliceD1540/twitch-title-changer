@@ -87,7 +87,7 @@ sudo dnf install google-noto-sans-cjk-fonts -y
 アプリケーションを実行してみます：
 
 ```bash
-python main_new.py
+python main.py
 ```
 
 #### 文字化けが解決されない場合
@@ -97,20 +97,20 @@ python main_new.py
 **A. 環境変数を明示的に設定**
 
 ```bash
-LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8 python main_new.py
+LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8 python main.py
 ```
 
 **B. Python のエンコーディングを指定**
 
 ```bash
 export PYTHONIOENCODING=utf-8
-python main_new.py
+python main.py
 ```
 
 **C. 両方を組み合わせる**
 
 ```bash
-LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8 PYTHONIOENCODING=utf-8 python main_new.py
+LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8 PYTHONIOENCODING=utf-8 python main.py
 ```
 
 ### 5. 永続的な設定（推奨）

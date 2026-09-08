@@ -57,7 +57,7 @@ export LC_ALL=ja_JP.UTF-8
 sudo apt install fonts-noto-cjk
 
 # アプリケーション実行
-python3 main_new.py
+python3 main.py
 ```
 
 詳細は [WSL_GUIDE.md](WSL_GUIDE.md) を参照してください。
@@ -94,17 +94,17 @@ python3 main_new.py
 
 **標準的な実行:**
 ```bash
-python3 main_new.py
+python3 main.py
 ```
 
 **WSL/Linux 環境:**
 ```bash
-LANG=ja_JP.UTF-8 python3 main_new.py
+LANG=ja_JP.UTF-8 python3 main.py
 ```
 
 **環境変数を完全に指定する場合:**
 ```bash
-LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8 PYTHONIOENCODING=utf-8 python3 main_new.py
+LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8 PYTHONIOENCODING=utf-8 python3 main.py
 ```
 
 **Windows 環境:**
@@ -171,7 +171,7 @@ twitch-title-changer/
 ├── tests/
 │   ├── __init__.py
 │   └── test_config.py       # 設定管理のテスト
-├── main_new.py              # アプリケーション エントリーポイント
+├── main.py              # アプリケーション エントリーポイント
 ├── config.json              # 設定ファイル（生成される）
 └── README.md
 ```
