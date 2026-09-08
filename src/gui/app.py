@@ -182,6 +182,32 @@ class TwitchTitleChangerApp:
             )
             await self.twitch_client.initialize()
             logger.info("Application initialized")
+
+            # 保存済みトークンがある場合は、起動時に自動で検証
+            if self.config.token and self.config.refresh_token:
+                try:
+                    access_token, refresh_token = await self.twitch_client.authenticate(
+                        self.config.token,
+                        self.config.refresh_token,
+                        force_verify=False,  # 既存トークンを再利用
+                    )
+                    # トークンが更新された場合は保存
+                    if (
+                        access_token != self.config.token
+                        or refresh_token != self.config.refresh_token
+                    ):
+                        self.config.token = access_token
+                        self.config.refresh_token = refresh_token
+                        self.config_loader.save()
+                        logger.info("Token refreshed and saved")
+                    else:
+                        logger.info("Using existing valid token")
+                except Exception as e:
+                    logger.warning(f"Saved token is invalid: {e}")
+                    # トークンが無効な場合はクリア
+                    self.config.token = None
+                    self.config.refresh_token = None
+
             return True
 
         except Exception as e:
@@ -194,6 +220,10 @@ class TwitchTitleChangerApp:
         game_list = self._get_game_list_display()
         header = ("ゲームタイトル", "ゲームID", "配信タイトル", "タグ")
 
+        # 認証状態を表示
+        auth_status = "✓ 認証済み" if self.config.token else "認証が必要です"
+        auth_status_color = "green" if self.config.token else "red"
+
         return [
             [
                 sg.Text("Twitch ユーザー名"),
@@ -202,6 +232,7 @@ class TwitchTitleChangerApp:
                     default_text=self.config.twitch_user_name or "",
                 ),
                 sg.Button("認証"),
+                sg.Text(auth_status, key="auth_status", text_color=auth_status_color),
             ],
             [
                 sg.Table(
@@ -250,15 +281,25 @@ class TwitchTitleChangerApp:
         # tkinter フォント設定を適用（タイトルバーの文字化け対策）
         _apply_font_to_window(self.main_window, _DEFAULT_FONT)
 
-    async def _handle_authenticate(self, username: str) -> None:
-        """認証処理"""
+    async def _handle_authenticate(
+        self, username: str, force_new_auth: bool = False
+    ) -> None:
+        """認証処理
+
+        Args:
+            username: Twitchユーザー名
+            force_new_auth: 強制的に新規認証するか（デフォルト: False）
+        """
         try:
             if not username:
                 sg.popup_error("ユーザー名を入力してください")
                 return
 
+            # 既存トークンを再利用し、無効な場合のみ新規認証
             access_token, refresh_token = await self.twitch_client.authenticate(
-                self.config.token, self.config.refresh_token, force_verify=True
+                self.config.token,
+                self.config.refresh_token,
+                force_verify=force_new_auth,
             )
             self.config.twitch_user_name = username
             self.config.token = access_token
@@ -498,7 +539,16 @@ class TwitchTitleChangerApp:
                 break
 
             if event == "認証":
-                await self._handle_authenticate(values["twitch_user_name"])
+                # 既存トークンを再利用する（必要に応じてリフレッシュ）
+                await self._handle_authenticate(
+                    values["twitch_user_name"], force_new_auth=False
+                )
+                # 認証状態を更新
+                auth_status = "✓ 認証済み" if self.config.token else "認証が必要です"
+                auth_status_color = "green" if self.config.token else "red"
+                self.main_window["auth_status"].update(
+                    value=auth_status, text_color=auth_status_color
+                )
 
             if event == "作成":
                 new_game = self._open_edit_game_window()
@@ -555,12 +605,23 @@ class TwitchTitleChangerApp:
                     selected_display_idx = selected[0]
                     game_list = self.config.get_sorted_games()
                     # 表示インデックスから元の配列インデックスに変換
-                    original_idx1 = self.config.games.index(game_list[selected_display_idx])
-                    original_idx2 = self.config.games.index(game_list[selected_display_idx - 1])
+                    original_idx1 = self.config.games.index(
+                        game_list[selected_display_idx]
+                    )
+                    original_idx2 = self.config.games.index(
+                        game_list[selected_display_idx - 1]
+                    )
                     self._swap_games(original_idx1, original_idx2)
                     # スワップ後、同じゲームが表示上どこに移動したかを取得
                     new_game_list = self.config.get_sorted_games()
-                    new_selected_idx = next((i for i, g in enumerate(new_game_list) if g == game_list[selected_display_idx]), 0)
+                    new_selected_idx = next(
+                        (
+                            i
+                            for i, g in enumerate(new_game_list)
+                            if g == game_list[selected_display_idx]
+                        ),
+                        0,
+                    )
                     self.main_window["list"].update(select_rows=[new_selected_idx])
 
             if event == "↓":
@@ -569,12 +630,23 @@ class TwitchTitleChangerApp:
                     selected_display_idx = selected[0]
                     game_list = self.config.get_sorted_games()
                     # 表示インデックスから元の配列インデックスに変換
-                    original_idx1 = self.config.games.index(game_list[selected_display_idx])
-                    original_idx2 = self.config.games.index(game_list[selected_display_idx + 1])
+                    original_idx1 = self.config.games.index(
+                        game_list[selected_display_idx]
+                    )
+                    original_idx2 = self.config.games.index(
+                        game_list[selected_display_idx + 1]
+                    )
                     self._swap_games(original_idx1, original_idx2)
                     # スワップ後、同じゲームが表示上どこに移動したかを取得
                     new_game_list = self.config.get_sorted_games()
-                    new_selected_idx = next((i for i, g in enumerate(new_game_list) if g == game_list[selected_display_idx]), 0)
+                    new_selected_idx = next(
+                        (
+                            i
+                            for i, g in enumerate(new_game_list)
+                            if g == game_list[selected_display_idx]
+                        ),
+                        0,
+                    )
                     self.main_window["list"].update(select_rows=[new_selected_idx])
 
         self.main_window.close()
