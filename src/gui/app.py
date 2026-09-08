@@ -31,9 +31,6 @@ _DEFAULT_FONT = ("Noto Sans CJK JP", _FONT_SIZE)  # WSL/Linux での日本語対
 _BUTTON_FONT = ("Noto Sans CJK JP", 10)
 _TEXT_FONT = ("Noto Sans CJK JP", 10)
 
-# tkinter フォント設定
-_TKINTER_FONT = tkFont.Font(family="Noto Sans CJK JP", size=_FONT_SIZE)
-
 # フォントが利用できない場合のフォールバック設定
 try:
     sg.set_options(font=_DEFAULT_FONT)
@@ -48,7 +45,7 @@ def _apply_font_to_window(window: sg.Window, font: tuple) -> None:
     """
     PySimpleGUI Window に tkinter フォント設定を適用
     タイトルバーを含む全体的なフォント設定
-    
+
     Args:
         window: PySimpleGUI Window オブジェクト
         font: フォント設定 (family, size)
@@ -57,8 +54,9 @@ def _apply_font_to_window(window: sg.Window, font: tuple) -> None:
         # PySimpleGUI Window の基になっている tkinter Window にアクセス
         root = window.TKroot
         if root:
-            # tkinter フォント設定を作成
-            tk_font = tkFont.Font(family=font[0], size=font[1] if isinstance(font, tuple) and len(font) > 1 else 10)
+            # tkinter フォント設定を作成（ウィンドウ作成後なので安全）
+            font_size = font[1] if isinstance(font, tuple) and len(font) > 1 else _FONT_SIZE
+            tk_font = tkFont.Font(family=font[0], size=font_size)
             # ウィンドウ全体のデフォルトフォントを設定
             root.option_add("*Font", tk_font)
     except Exception as e:
