@@ -1,6 +1,7 @@
 """GUI アプリケーションメイン"""
 
 import asyncio
+import locale
 from typing import Optional, List
 
 import PySimpleGUI as sg
@@ -11,6 +12,29 @@ from src.config.models import GameConfig
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+# ロケール設定（UTF-8を確保）
+try:
+    locale.setlocale(locale.LC_ALL, "ja_JP.UTF-8")
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, "")
+    except locale.Error:
+        pass
+
+# PySimpleGUI の日本語フォント設定
+# WSL 環境での文字化け対策
+_FONT_SIZE = 10
+_DEFAULT_FONT = ("Noto Sans CJK JP", _FONT_SIZE)  # WSL/Linux での日本語対応フォント
+_BUTTON_FONT = ("Noto Sans CJK JP", 10)
+_TEXT_FONT = ("Noto Sans CJK JP", 10)
+
+# フォントが利用できない場合のフォールバック設定
+try:
+    sg.set_options(font=_DEFAULT_FONT)
+except Exception:
+    # フォントが見つからない場合は、システムデフォルトを使用
+    sg.set_options(font=("TkDefaultFont", _FONT_SIZE))
 
 sg.theme("BlueMono")
 
@@ -43,7 +67,9 @@ class TwitchTitleChangerApp:
             logger.info("Configuration loaded")
 
             # Twitchクライアントを初期化
-            self.twitch_client = TwitchClient(self.config.client_id, self.config.secret_id)
+            self.twitch_client = TwitchClient(
+                self.config.client_id, self.config.secret_id
+            )
             await self.twitch_client.initialize()
             logger.info("Application initialized")
             return True
@@ -61,7 +87,10 @@ class TwitchTitleChangerApp:
         return [
             [
                 sg.Text("Twitch ユーザー名"),
-                sg.InputText(key="twitch_user_name", default_text=self.config.twitch_user_name or ""),
+                sg.InputText(
+                    key="twitch_user_name",
+                    default_text=self.config.twitch_user_name or "",
+                ),
                 sg.Button("認証"),
             ],
             [
@@ -101,7 +130,13 @@ class TwitchTitleChangerApp:
     def _open_main_window(self) -> None:
         """メインウインドウを開く"""
         layout = self._create_main_layout()
-        self.main_window = sg.Window("Twitch タイトル変更ツール", layout, finalize=True, resizable=False)
+        self.main_window = sg.Window(
+            "Twitch タイトル変更ツール",
+            layout,
+            finalize=True,
+            resizable=False,
+            font=_DEFAULT_FONT,
+        )
 
     async def _handle_authenticate(self, username: str) -> None:
         """認証処理"""
@@ -125,7 +160,9 @@ class TwitchTitleChangerApp:
             logger.error(f"Authentication failed: {e}")
             sg.popup_error("認証に失敗しました", f"{e}")
 
-    def _open_edit_game_window(self, game: Optional[GameConfig] = None) -> Optional[GameConfig]:
+    def _open_edit_game_window(
+        self, game: Optional[GameConfig] = None
+    ) -> Optional[GameConfig]:
         """ゲーム情報編集ウインドウを開く"""
         if game is None:
             game_name = ""
@@ -141,7 +178,11 @@ class TwitchTitleChangerApp:
             is_new = False
 
         layout = [
-            [sg.Text("ゲームタイトル検索"), sg.InputText(key="search_word"), sg.Button("検索")],
+            [
+                sg.Text("ゲームタイトル検索"),
+                sg.InputText(key="search_word"),
+                sg.Button("検索"),
+            ],
             [sg.HorizontalSeparator()],
             [
                 sg.Column(
@@ -163,13 +204,21 @@ class TwitchTitleChangerApp:
             ],
             [
                 sg.Column(
-                    [[sg.Button("現在のタグを読み込む"), sg.Button("更新"), sg.Button("キャンセル")]],
+                    [
+                        [
+                            sg.Button("現在のタグを読み込む"),
+                            sg.Button("更新"),
+                            sg.Button("キャンセル"),
+                        ]
+                    ],
                     justification="r",
                 )
             ],
         ]
 
-        window = sg.Window("配信情報編集", layout, finalize=True, modal=True)
+        window = sg.Window(
+            "配信情報編集", layout, finalize=True, modal=True, font=_DEFAULT_FONT
+        )
 
         while True:
             event, values = window.read()
@@ -200,7 +249,9 @@ class TwitchTitleChangerApp:
                     game_name=values["game_name"],
                     title=values["title"],
                     tags=values["tags"],
-                    priority=game.priority if game else self.config.get_max_priority() + 1,
+                    priority=(
+                        game.priority if game else self.config.get_max_priority() + 1
+                    ),
                 )
                 window.close()
                 return result_game
@@ -226,10 +277,16 @@ class TwitchTitleChangerApp:
                     key="game_list",
                 )
             ],
-            [sg.Column([[sg.Button("OK"), sg.Button("キャンセル")]], justification="r")],
+            [
+                sg.Column(
+                    [[sg.Button("OK"), sg.Button("キャンセル")]], justification="r"
+                )
+            ],
         ]
 
-        window = sg.Window("ゲーム検索結果", layout, finalize=True, modal=True)
+        window = sg.Window(
+            "ゲーム検索結果", layout, finalize=True, modal=True, font=_DEFAULT_FONT
+        )
 
         while True:
             event, values = window.read()
@@ -269,7 +326,9 @@ class TwitchTitleChangerApp:
                 sg.popup_error("Twitchユーザー名が設定されていません")
                 return False
 
-            broadcaster_id = await self.twitch_client.get_broadcaster_id(self.config.twitch_user_name)
+            broadcaster_id = await self.twitch_client.get_broadcaster_id(
+                self.config.twitch_user_name
+            )
             tags = game.tags.split(",") if game.tags else []
 
             success = await self.twitch_client.update_channel_information(
@@ -281,7 +340,9 @@ class TwitchTitleChangerApp:
 
             if success:
                 sg.popup_notify("配信情報をTwitchに反映しました")
-                logger.info(f"Channel information updated for {self.config.twitch_user_name}")
+                logger.info(
+                    f"Channel information updated for {self.config.twitch_user_name}"
+                )
             else:
                 sg.popup_error("Twitchへの反映に失敗しました")
 
@@ -323,7 +384,9 @@ class TwitchTitleChangerApp:
                 if new_game:
                     self.config.add_game(new_game)
                     self.config_loader.save()
-                    self.main_window["list"].update(values=self._get_game_list_display())
+                    self.main_window["list"].update(
+                        values=self._get_game_list_display()
+                    )
 
             if event == "編集":
                 selected = values["list"]
@@ -337,7 +400,9 @@ class TwitchTitleChangerApp:
                 if updated_game:
                     self.config.update_game(original_idx, updated_game)
                     self.config_loader.save()
-                    self.main_window["list"].update(values=self._get_game_list_display())
+                    self.main_window["list"].update(
+                        values=self._get_game_list_display()
+                    )
 
             if event == "削除":
                 selected = values["list"]
@@ -350,7 +415,9 @@ class TwitchTitleChangerApp:
                     original_idx = self.config.games.index(game_list[selected_idx])
                     self.config.remove_game(original_idx)
                     self.config_loader.save()
-                    self.main_window["list"].update(values=self._get_game_list_display())
+                    self.main_window["list"].update(
+                        values=self._get_game_list_display()
+                    )
 
             if event == "Twitchに反映":
                 selected = values["list"]

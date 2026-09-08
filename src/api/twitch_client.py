@@ -77,8 +77,8 @@ class TwitchClient:
                 except InvalidTokenException:
                     # トークンが無効な場合はリフレッシュ
                     logger.warning("Access token expired, refreshing...")
-                    new_access_token, new_refresh_token = await self._refresh_token_impl(
-                        refresh_token
+                    new_access_token, new_refresh_token = (
+                        await self._refresh_token_impl(refresh_token)
                     )
                     await self.twitch.set_user_authentication(
                         new_access_token, self.target_scope, new_refresh_token
@@ -88,7 +88,9 @@ class TwitchClient:
                     return new_access_token, new_refresh_token
             else:
                 # 新規認証
-                auth = UserAuthenticator(self.twitch, self.target_scope, force_verify=force_verify)
+                auth = UserAuthenticator(
+                    self.twitch, self.target_scope, force_verify=force_verify
+                )
                 new_access_token, new_refresh_token = await auth.authenticate()
                 await self.twitch.set_user_authentication(
                     new_access_token, self.target_scope, new_refresh_token
@@ -175,7 +177,9 @@ class TwitchClient:
             logger.error(f"Failed to get broadcaster ID: {e}")
             raise TwitchConnectionError(f"Failed to get broadcaster ID: {e}")
 
-    async def get_channel_information(self, broadcaster_id: str) -> Optional[Dict[str, Any]]:
+    async def get_channel_information(
+        self, broadcaster_id: str
+    ) -> Optional[Dict[str, Any]]:
         """
         チャンネル情報を取得
 
@@ -189,7 +193,9 @@ class TwitchClient:
             raise TwitchConnectionError("Twitch client not initialized")
 
         try:
-            result = await self.twitch.get_channel_information(broadcaster_id=broadcaster_id)
+            result = await self.twitch.get_channel_information(
+                broadcaster_id=broadcaster_id
+            )
             logger.info(f"Channel information retrieved for {broadcaster_id}")
             return result
         except Exception as e:

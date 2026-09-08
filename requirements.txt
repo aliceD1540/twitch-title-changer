@@ -1,8 +1,8 @@
-"""
-Requirements for Twitch Title Changer
-
-Note: The latest versions are recommended for security and stability.
-"""
+# Requirements for Twitch Title Changer
+#
+# Note: The latest versions are recommended for security and stability.
+# For WSL/Linux environments, ensure locale settings are configured properly.
+# See WSL_GUIDE.md for environment-specific instructions.
 
 # GUI Framework
 PySimpleGUI>=4.60.3
