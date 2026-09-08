@@ -55,7 +55,7 @@ def open_sub_window(data):
                 continue
             result = main.search_games(values['search word'])
             sub_window.modal = False
-            game_info = open_search_window(result)
+            game_info = asyncio.run(open_search_window(result))
             sub_window.modal = True
             if game_info != None:
                 sub_window['game title'].update(game_info[0][0])
@@ -77,12 +77,13 @@ def open_sub_window(data):
     sub_window.close()
     return res
 
-def open_search_window(categories:dict):
+async def open_search_window(categories:dict):
     """
     game id検索用サブウインドウの制御
     """
     header = ('Game Title', 'Game Id')
     categorie_list = []
+    print(categories)
     for categorie in categories['data']:
         categorie_list.append([categorie['name'],categorie['id']])
 
