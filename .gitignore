@@ -49,6 +49,16 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+
+# Logs
+logs/
+*.log
+
+# Configuration (sensitive data)
+config.json
+.env
+.env.local
+.pytest_cache/
 cover/
 
 # Translations

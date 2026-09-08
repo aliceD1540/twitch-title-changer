@@ -1,0 +1,22 @@
+"""
+Requirements for Twitch Title Changer
+
+Note: The latest versions are recommended for security and stability.
+"""
+
+# GUI Framework
+PySimpleGUI>=4.60.3
+
+# Twitch API
+twitchAPI>=4.0.0
+
+# Utilities
+python-dateutil>=2.8.2
+aiohttp>=3.8.0
+
+# Development (optional)
+pytest>=7.0.0
+pytest-asyncio>=0.20.0
+black>=22.0.0
+flake8>=4.0.0
+mypy>=0.900
