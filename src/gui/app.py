@@ -33,10 +33,17 @@ _TEXT_FONT = ("Noto Sans CJK JP", 10)
 
 # フォントが利用できない場合のフォールバック設定
 try:
-    sg.set_options(font=_DEFAULT_FONT)
+    sg.set_options(
+        font=_DEFAULT_FONT,
+        default_font=_DEFAULT_FONT,
+        button_font=_DEFAULT_FONT,
+    )
 except Exception:
     # フォントが見つからない場合は、システムデフォルトを使用
-    sg.set_options(font=("TkDefaultFont", _FONT_SIZE))
+    sg.set_options(
+        font=("TkDefaultFont", _FONT_SIZE),
+        default_font=("TkDefaultFont", _FONT_SIZE),
+    )
 
 sg.theme("BlueMono")
 
@@ -53,12 +60,49 @@ def _apply_font_to_window(window: sg.Window, font: tuple) -> None:
     try:
         # PySimpleGUI Window の基になっている tkinter Window にアクセス
         root = window.TKroot
-        if root:
-            # tkinter フォント設定を作成（ウィンドウ作成後なので安全）
-            font_size = font[1] if isinstance(font, tuple) and len(font) > 1 else _FONT_SIZE
-            tk_font = tkFont.Font(family=font[0], size=font_size)
-            # ウィンドウ全体のデフォルトフォントを設定
-            root.option_add("*Font", tk_font)
+        if not root:
+            return
+
+        font_family = font[0] if isinstance(font, tuple) and len(font) > 0 else "TkDefaultFont"
+        font_size = font[1] if isinstance(font, tuple) and len(font) > 1 else _FONT_SIZE
+
+        # tkinter フォント設定を作成（ウィンドウ作成後なので安全）
+        try:
+            tk_font = tkFont.Font(family=font_family, size=font_size)
+        except tk.TclError:
+            # フォントが見つからない場合はデフォルトを使用
+            tk_font = tkFont.Font(family="TkDefaultFont", size=font_size)
+            logger.warning(
+                f"Font '{font_family}' not found, using system default"
+            )
+
+        # ウィンドウ全体のデフォルトフォントを設定
+        root.option_add("*Font", tk_font)
+
+        # すべての子 widget に対して直接フォント設定を適用
+        def set_font_recursive(widget):
+            """再帰的にすべてのウィジェットにフォント設定を適用"""
+            try:
+                # widget がフォント属性を持つ場合は設定
+                if hasattr(widget, "configure"):
+                    try:
+                        widget.configure(font=tk_font)
+                    except tk.TclError:
+                        # フォント設定が不可能なウィジェットはスキップ
+                        pass
+            except Exception:
+                pass
+
+            # 子ウィジェットに対して再帰的に処理
+            try:
+                for child in widget.winfo_children():
+                    set_font_recursive(child)
+            except Exception:
+                pass
+
+        # ルートウィンドウから再帰的にフォント設定を適用
+        set_font_recursive(root)
+
     except Exception as e:
         logger.warning(f"Could not apply tkinter font: {e}")
 
