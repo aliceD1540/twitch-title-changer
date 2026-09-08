@@ -33,17 +33,11 @@ _TEXT_FONT = ("Noto Sans CJK JP", 10)
 
 # フォントが利用できない場合のフォールバック設定
 try:
-    sg.set_options(
-        font=_DEFAULT_FONT,
-        default_font=_DEFAULT_FONT,
-        button_font=_DEFAULT_FONT,
-    )
-except Exception:
+    sg.set_options(font=_DEFAULT_FONT)
+except Exception as e:
     # フォントが見つからない場合は、システムデフォルトを使用
-    sg.set_options(
-        font=("TkDefaultFont", _FONT_SIZE),
-        default_font=("TkDefaultFont", _FONT_SIZE),
-    )
+    logger.warning(f"Could not set font option: {e}")
+    sg.set_options(font=("TkDefaultFont", _FONT_SIZE))
 
 sg.theme("BlueMono")
 
