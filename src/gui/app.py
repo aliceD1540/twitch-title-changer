@@ -2,6 +2,8 @@
 
 import asyncio
 import locale
+import tkinter as tk
+import tkinter.font as tkFont
 from typing import Optional, List
 
 import PySimpleGUI as sg
@@ -29,6 +31,9 @@ _DEFAULT_FONT = ("Noto Sans CJK JP", _FONT_SIZE)  # WSL/Linux での日本語対
 _BUTTON_FONT = ("Noto Sans CJK JP", 10)
 _TEXT_FONT = ("Noto Sans CJK JP", 10)
 
+# tkinter フォント設定
+_TKINTER_FONT = tkFont.Font(family="Noto Sans CJK JP", size=_FONT_SIZE)
+
 # フォントが利用できない場合のフォールバック設定
 try:
     sg.set_options(font=_DEFAULT_FONT)
@@ -37,6 +42,27 @@ except Exception:
     sg.set_options(font=("TkDefaultFont", _FONT_SIZE))
 
 sg.theme("BlueMono")
+
+
+def _apply_font_to_window(window: sg.Window, font: tuple) -> None:
+    """
+    PySimpleGUI Window に tkinter フォント設定を適用
+    タイトルバーを含む全体的なフォント設定
+    
+    Args:
+        window: PySimpleGUI Window オブジェクト
+        font: フォント設定 (family, size)
+    """
+    try:
+        # PySimpleGUI Window の基になっている tkinter Window にアクセス
+        root = window.TKroot
+        if root:
+            # tkinter フォント設定を作成
+            tk_font = tkFont.Font(family=font[0], size=font[1] if isinstance(font, tuple) and len(font) > 1 else 10)
+            # ウィンドウ全体のデフォルトフォントを設定
+            root.option_add("*Font", tk_font)
+    except Exception as e:
+        logger.warning(f"Could not apply tkinter font: {e}")
 
 
 class TwitchTitleChangerApp:
@@ -137,6 +163,8 @@ class TwitchTitleChangerApp:
             resizable=False,
             font=_DEFAULT_FONT,
         )
+        # tkinter フォント設定を適用（タイトルバーの文字化け対策）
+        _apply_font_to_window(self.main_window, _DEFAULT_FONT)
 
     async def _handle_authenticate(self, username: str) -> None:
         """認証処理"""
@@ -219,6 +247,8 @@ class TwitchTitleChangerApp:
         window = sg.Window(
             "配信情報編集", layout, finalize=True, modal=True, font=_DEFAULT_FONT
         )
+        # tkinter フォント設定を適用（タイトルバーの文字化け対策）
+        _apply_font_to_window(window, _DEFAULT_FONT)
 
         while True:
             event, values = window.read()
@@ -287,6 +317,8 @@ class TwitchTitleChangerApp:
         window = sg.Window(
             "ゲーム検索結果", layout, finalize=True, modal=True, font=_DEFAULT_FONT
         )
+        # tkinter フォント設定を適用（タイトルバーの文字化け対策）
+        _apply_font_to_window(window, _DEFAULT_FONT)
 
         while True:
             event, values = window.read()
