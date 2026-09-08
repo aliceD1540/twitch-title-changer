@@ -23,9 +23,44 @@ Twitchの配信タイトルを効率的に管理・変更するツールです�
 
 ## インストール
 
+### WSL/Linux ユーザー向け（推奨）
+
+自動セットアップスクリプトを使用：
+
+```bash
+chmod +x setup_wsl.sh
+./setup_wsl.sh
+```
+
+このスクリプトが以下を自動で行います：
+- Python 3 の確認
+- 日本語フォント（Noto Sans CJK）のインストール
+- ロケール設定
+- Python 依存パッケージのインストール
+
+### 手動インストール
+
 ```bash
 pip install -r requirements.txt
 ```
+
+### WSL 環境での文字化け対策
+
+WSL で日本語が豆腐（□）のように表示される場合：
+
+```bash
+# ロケール設定
+export LANG=ja_JP.UTF-8
+export LC_ALL=ja_JP.UTF-8
+
+# 日本語フォントをインストール
+sudo apt install fonts-noto-cjk
+
+# アプリケーション実行
+python3 main_new.py
+```
+
+詳細は [WSL_GUIDE.md](WSL_GUIDE.md) を参照してください。
 
 ## 設定
 
@@ -55,8 +90,21 @@ pip install -r requirements.txt
 
 ## 使い方
 
+### 起動コマンド
+
+**標準的な実行:**
 ```bash
-python main_new.py
+python3 main_new.py
+```
+
+**WSL/Linux 環境:**
+```bash
+LANG=ja_JP.UTF-8 python3 main_new.py
+```
+
+**環境変数を完全に指定する場合:**
+```bash
+LANG=ja_JP.UTF-8 LC_ALL=ja_JP.UTF-8 PYTHONIOENCODING=utf-8 python3 main_new.py
 ```
 
 ### 基本的な操作
@@ -74,6 +122,15 @@ python main_new.py
 3. **Twitchに反映**
    - ゲームを選択して「Twitchに反映」をクリック
    - 配信タイトル、ゲーム、タグが更新されます
+
+### トラブルシューティング
+
+**文字化け（豆腐）が発生する場合:**
+- [WSL_GUIDE.md](WSL_GUIDE.md) を参照してください
+- 通常は `LANG=ja_JP.UTF-8` を設定することで解決します
+
+**その他のエラー:**
+- ログファイルを確認: `cat logs/twitch_title_changer.log`
 
 ## プロジェクト構造
 
