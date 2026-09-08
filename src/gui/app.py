@@ -2,9 +2,10 @@
 
 import asyncio
 import locale
+import threading
 import tkinter as tk
 import tkinter.font as tkFont
-from typing import Optional, List
+from typing import Optional, List, Coroutine, TypeVar
 
 import PySimpleGUI as sg
 
@@ -14,6 +15,53 @@ from src.config.models import GameConfig
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+T = TypeVar("T")
+
+
+def _run_async_in_event_loop(coro: Coroutine[None, None, T]) -> T:
+    """
+    既に実行中のイベントループ内で非同期操作を安全に実行
+
+    Args:
+        coro: 実行するコルーチン
+
+    Returns:
+        コルーチンの実行結果
+    """
+    try:
+        # 既に実行中のイベントループを取得
+        loop = asyncio.get_running_loop()
+        # イベントループ内にいる場合、別スレッドで新しいイベントループを作成
+        result_container = []
+        exception_container = []
+
+        def run_in_thread():
+            try:
+                # 新しいスレッドで新しいイベントループを作成
+                new_loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(new_loop)
+                try:
+                    result = new_loop.run_until_complete(coro)
+                    result_container.append(result)
+                finally:
+                    new_loop.close()
+            except Exception as e:
+                exception_container.append(e)
+
+        thread = threading.Thread(target=run_in_thread, daemon=False)
+        thread.start()
+        thread.join()
+
+        if exception_container:
+            raise exception_container[0]
+        if result_container:
+            return result_container[0]
+        return None
+    except RuntimeError:
+        # イベントループが実行中でない場合は asyncio.run() を使用
+        return asyncio.run(coro)
+
 
 # ロケール設定（UTF-8を確保）
 try:
@@ -57,7 +105,9 @@ def _apply_font_to_window(window: sg.Window, font: tuple) -> None:
         if not root:
             return
 
-        font_family = font[0] if isinstance(font, tuple) and len(font) > 0 else "TkDefaultFont"
+        font_family = (
+            font[0] if isinstance(font, tuple) and len(font) > 0 else "TkDefaultFont"
+        )
         font_size = font[1] if isinstance(font, tuple) and len(font) > 1 else _FONT_SIZE
 
         # tkinter フォント設定を作成（ウィンドウ作成後なので安全）
@@ -66,9 +116,7 @@ def _apply_font_to_window(window: sg.Window, font: tuple) -> None:
         except tk.TclError:
             # フォントが見つからない場合はデフォルトを使用
             tk_font = tkFont.Font(family="TkDefaultFont", size=font_size)
-            logger.warning(
-                f"Font '{font_family}' not found, using system default"
-            )
+            logger.warning(f"Font '{font_family}' not found, using system default")
 
         # ウィンドウ全体のデフォルトフォントを設定
         root.option_add("*Font", tk_font)
@@ -303,7 +351,11 @@ class TwitchTitleChangerApp:
                     window["game_id"].update(selected[1])
 
             if event == "現在のタグを読み込む":
-                asyncio.run(self._load_current_tags(values))
+                tags = self._load_current_tags()
+                if tags is not None:
+                    window["tags"].update(",".join(tags))
+                else:
+                    sg.popup_error("タグの読み込みに失敗しました")
 
             if event == "更新":
                 if not values["game_id"]:
@@ -324,12 +376,12 @@ class TwitchTitleChangerApp:
 
     def _open_search_game_window(self, query: str) -> Optional[tuple]:
         """ゲーム検索ウインドウを開く"""
-        results = asyncio.run(self.twitch_client.search_games(query))
+        results = _run_async_in_event_loop(self.twitch_client.search_games(query))
         if not results:
             sg.popup_error("ゲームが見つかりません")
             return None
 
-        games = [[item["name"], item["id"]] for item in results]
+        games = [[item.name, item.id] for item in results]
         header = ("ゲームタイトル", "ID")
 
         layout = [
@@ -372,20 +424,22 @@ class TwitchTitleChangerApp:
                 window.close()
                 return None
 
-    async def _load_current_tags(self, values: dict) -> None:
-        """現在のタグを読み込む"""
+    async def _load_current_tags_async(self) -> List[str]:
+        """現在のタグを非同期で取得"""
+        if not self.config.twitch_user_name:
+            raise ValueError("Twitchユーザー名が設定されていません")
+
+        tags = await self.twitch_client.get_tags(self.config.twitch_user_name)
+        logger.info("Current tags loaded")
+        return tags
+
+    def _load_current_tags(self) -> Optional[List[str]]:
+        """現在のタグを読み込む（同期インターフェース）"""
         try:
-            if not self.config.twitch_user_name:
-                sg.popup_error("Twitchユーザー名が設定されていません")
-                return
-
-            tags = await self.twitch_client.get_tags(self.config.twitch_user_name)
-            self.main_window["tags"].update(",".join(tags))
-            logger.info("Current tags loaded")
-
+            return _run_async_in_event_loop(self._load_current_tags_async())
         except Exception as e:
             logger.error(f"Failed to load tags: {e}")
-            sg.popup_error("タグの読み込みに失敗しました", f"{e}")
+            return None
 
     async def _handle_regist_to_twitch(self, game: GameConfig) -> bool:
         """Twitchに配信情報を反映"""

@@ -144,9 +144,11 @@ class TwitchClient:
             raise TwitchConnectionError("Twitch client not initialized")
 
         try:
-            result = await self.twitch.search_categories(query)
-            logger.info(f"Game search completed: {query}")
-            return result.get("data", []) if result else []
+            results = []
+            async for item in self.twitch.search_categories(query):
+                results.append(item)
+            logger.info(f"Game search completed: {query}, found {len(results)} results")
+            return results
         except Exception as e:
             logger.error(f"Game search failed: {e}")
             return []
