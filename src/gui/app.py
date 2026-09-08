@@ -1,3 +1,6 @@
+# Copyright (c) 2026 project-grimoire.dev
+# Licensed under the MIT License. See LICENSE file for details.
+
 """GUI アプリケーションメイン"""
 
 import asyncio

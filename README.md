@@ -209,7 +209,13 @@ python -m unittest discover tests
 
 ## ライセンス
 
-MIT License
+このプロジェクトは MIT License の下で公開されています。
+
+詳細は [LICENSE](LICENSE) ファイルを参照してください。
+
+**Copyright (c) 2026 project-grimoire.dev**
+
+このソフトウェアは「現状のまま」提供され、明示的または暗示的なあらゆる保証なしに提供されます。詳細は LICENSE ファイルをご覧ください。
 
 ## 開発者
 
