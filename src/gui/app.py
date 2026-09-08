@@ -483,7 +483,6 @@ class TwitchTitleChangerApp:
             game1.priority, game2.priority = game2.priority, game1.priority
             self.config_loader.save()
             self.main_window["list"].update(values=self._get_game_list_display())
-            self.main_window["list"].update(select_rows=[idx2])
 
     async def run(self) -> None:
         """アプリケーションを実行"""
@@ -553,12 +552,30 @@ class TwitchTitleChangerApp:
             if event == "↑":
                 selected = values["list"]
                 if selected and selected[0] > 0:
-                    self._swap_games(selected[0], selected[0] - 1)
+                    selected_display_idx = selected[0]
+                    game_list = self.config.get_sorted_games()
+                    # 表示インデックスから元の配列インデックスに変換
+                    original_idx1 = self.config.games.index(game_list[selected_display_idx])
+                    original_idx2 = self.config.games.index(game_list[selected_display_idx - 1])
+                    self._swap_games(original_idx1, original_idx2)
+                    # スワップ後、同じゲームが表示上どこに移動したかを取得
+                    new_game_list = self.config.get_sorted_games()
+                    new_selected_idx = next((i for i, g in enumerate(new_game_list) if g == game_list[selected_display_idx]), 0)
+                    self.main_window["list"].update(select_rows=[new_selected_idx])
 
             if event == "↓":
                 selected = values["list"]
-                if selected and selected[0] < len(self.config.games) - 1:
-                    self._swap_games(selected[0], selected[0] + 1)
+                if selected and selected[0] < len(self.config.get_sorted_games()) - 1:
+                    selected_display_idx = selected[0]
+                    game_list = self.config.get_sorted_games()
+                    # 表示インデックスから元の配列インデックスに変換
+                    original_idx1 = self.config.games.index(game_list[selected_display_idx])
+                    original_idx2 = self.config.games.index(game_list[selected_display_idx + 1])
+                    self._swap_games(original_idx1, original_idx2)
+                    # スワップ後、同じゲームが表示上どこに移動したかを取得
+                    new_game_list = self.config.get_sorted_games()
+                    new_selected_idx = next((i for i, g in enumerate(new_game_list) if g == game_list[selected_display_idx]), 0)
+                    self.main_window["list"].update(select_rows=[new_selected_idx])
 
         self.main_window.close()
         if self.twitch_client:
