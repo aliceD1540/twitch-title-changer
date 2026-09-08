@@ -49,6 +49,16 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+
+# Logs
+logs/
+*.log
+
+# Configuration (sensitive data)
+config.json
+.env
+.env.local
+.pytest_cache/
 cover/
 
 # Translations
@@ -88,6 +98,92 @@ ipython_config.py
 # .python-version
 
 # pipenv
+#   According to PEP 582; this is alternative to venv above.
+#   .pdm.toml
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Third-party packages (site-packages)
+aiohttp/
+aiohttp-*.dist-info/
+aiosignal/
+aiosignal-*.dist-info/
+async_timeout/
+async_timeout-*.dist-info/
+attr/
+attrs/
+attrs-*.dist-info/
+certifi/
+certifi-*.dist-info/
+charset_normalizer/
+charset_normalizer-*.dist-info/
+dateutil/
+python_dateutil-*.dist-info/
+frozenlist/
+frozenlist-*.dist-info/
+idna/
+idna-*.dist-info/
+multidict/
+multidict-*.dist-info/
+PySimpleGUI/
+PySimpleGUI-*.dist-info/
+requests/
+requests-*.dist-info/
+six/
+six-*.dist-info/
+twitchAPI/
+twitchAPI-*.dist-info/
+typing_extensions-*.dist-info/
+urllib3/
+urllib3-*.dist-info/
+websockets/
+websockets-*.dist-info/
+yarl/
+yarl-*.dist-info/
+bin/
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
 #   However, in case of collaboration, if having platform-specific dependencies or dependencies
 #   having no cross-platform support, pipenv may install dependencies that don't work, or not
